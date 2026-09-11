@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -107,19 +107,17 @@
       </div>
     </div>
 
-    <!-- Input Manual / Scanner Gun -->
+    <!-- Manual Identifier / Barcode Scanner Gun Input -->
     <input 
       type="text" 
       id="manualInput" 
       class="manual-input" 
-      placeholder="ID Tamu / Barcode Gun..." 
+      placeholder="Pass Identifier / Scan Barcode Gun..." 
       onkeydown="if(event.key==='Enter'){ triggerScan(this.value.trim()); this.value=''; }"
     >
 
-    <!-- Kamera Live Stream -->
     <div id="reader"></div>
 
-    <!-- Hasil Scan -->
     <div id="resultBox" class="result-card">
       <h3 id="resTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
       <p id="resGuest" style="color: #cbd5e1; font-size: 0.92rem; margin-top: 4px; font-weight: 600;"></p>
@@ -128,7 +126,7 @@
   </div>
 
   <script>
-    // TEMPELKAN LINK EXEC APPS SCRIPT DI BAWAH INI:
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP /exec URL HERE:
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfFvxF5nIADv6uwLXA9sDtJYZmdN10h2SpE5Pa2bz2_Im0c-i1Ckwxv_M6OOWXAvdX/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -151,8 +149,8 @@
       const box = document.getElementById('resultBox');
       box.style.display = "block";
       box.className = "result-card";
-      document.getElementById('resTitle').innerText = "MEMVALIDASI...";
-      document.getElementById('resGuest').innerText = "ID: " + id;
+      document.getElementById('resTitle').innerText = "VERIFYING CREDENTIALS...";
+      document.getElementById('resGuest').innerText = "Pass ID: " + id;
       document.getElementById('resTable').innerText = "";
 
       const checkInEndpoint = APPS_SCRIPT_URL + 
@@ -161,19 +159,16 @@
         "&event=" + encodeURIComponent(eventCode) +
         "&t=" + Date.now();
 
-      // Jalur 1: Fetch langsung
       fetch(checkInEndpoint, { mode: 'no-cors' });
 
-      // Jalur 2: Image Beacon Cadangan (100% tembus semua browser tanpa blokir CORS)
       const beacon = new Image();
       beacon.src = checkInEndpoint;
 
-      // Konfirmasi Sukses di Layar Scanner
       setTimeout(() => {
         box.className = "result-card res-success";
-        document.getElementById('resTitle').innerText = "✓ CHECK-IN TERKIRIM";
-        document.getElementById('resGuest').innerText = "ID: " + id;
-        document.getElementById('resTable').innerText = "MEMICU LAYAR TV...";
+        document.getElementById('resTitle').innerText = "✓ CHECK-IN DISPATCHED";
+        document.getElementById('resGuest').innerText = "Pass ID: " + id;
+        document.getElementById('resTable').innerText = "SYNCHRONISING DISPLAY...";
       }, 500);
 
       setTimeout(() => {
