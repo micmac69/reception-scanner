@@ -107,7 +107,6 @@
       </div>
     </div>
 
-    <!-- Manual Barcode/ID Input -->
     <input 
       type="text" 
       id="manualInput" 
@@ -116,10 +115,8 @@
       onkeydown="if(event.key==='Enter'){ triggerScan(this.value.trim()); this.value=''; }"
     >
 
-    <!-- Kamera Live Viewfinder -->
     <div id="reader"></div>
 
-    <!-- Hasil Scan -->
     <div id="resultBox" class="result-card">
       <h3 id="resTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
       <p id="resGuest" style="color: #cbd5e1; font-size: 0.92rem; margin-top: 4px; font-weight: 600;"></p>
@@ -128,7 +125,7 @@
   </div>
 
   <script>
-    // TEMPELKAN URL EXEC DARI APPS SCRIPT ANDA DI BAWAH INI:
+    // TEMPELKAN LINK EXEC DARI APPS SCRIPT ANDA DI SINI:
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfFvxF5nIADv6uwLXA9sDtJYZmdN10h2SpE5Pa2bz2_Im0c-i1Ckwxv_M6OOWXAvdX/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -152,10 +149,10 @@
       box.style.display = "block";
       box.className = "result-card";
       document.getElementById('resTitle').innerText = "MEMVALIDASI...";
-      document.getElementById('resGuest').innerText = "Menghubungi database...";
+      document.getElementById('resGuest').innerText = "Menghubungkan ke server...";
       document.getElementById('resTable').innerText = "";
 
-      // Mengirim request check-in yang langsung memicu antrean TV
+      // Mengirim check-in ke Google Sheets
       const targetUrl = APPS_SCRIPT_URL + 
         "?action=checkIn&id=" + encodeURIComponent(id) + 
         "&pin=" + encodeURIComponent(pin) + 
@@ -166,12 +163,12 @@
         .then(res => {
           if (res.status === "success") {
             box.className = "result-card res-success";
-            document.getElementById('resTitle').innerText = "✓ CHECK-IN BERHASIL";
+            document.getElementById('resTitle').innerText = "✓ BERHASIL CHECK-IN";
             document.getElementById('resGuest').innerText = res.name + " (" + res.company + ")";
             document.getElementById('resTable').innerText = "TABLE: " + res.table;
           } else if (res.status === "already_checked_in") {
             box.className = "result-card res-warn";
-            document.getElementById('resTitle').innerText = "⚠️ SUDAH CHECK-IN";
+            document.getElementById('resTitle').innerText = "⚠️ SUDAH CHECK-IN (DITAYANGKAN)";
             document.getElementById('resGuest').innerText = res.name + " (" + res.company + ")";
             document.getElementById('resTable').innerText = "TABLE: " + res.table;
           } else {
@@ -187,11 +184,10 @@
           }, 2500);
         })
         .catch(err => {
-          // Fallback fetch jika ada pembatasan browser
-          box.className = "result-card res-success";
+          box.className = "result-card res-warn";
           document.getElementById('resTitle').innerText = "✓ SCAN TERKIRIM";
           document.getElementById('resGuest').innerText = "ID: " + id;
-          document.getElementById('resTable').innerText = "Terkirim ke Server";
+          document.getElementById('resTable').innerText = "Memproses di Sheets...";
           
           setTimeout(() => {
             isProcessing = false;
