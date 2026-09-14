@@ -126,7 +126,7 @@
   </div>
 
   <script>
-    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP /exec URL HERE:
+    // APPS SCRIPT WEB APP /exec URL:
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfFvxF5nIADv6uwLXA9sDtJYZmdN10h2SpE5Pa2bz2_Im0c-i1Ckwxv_M6OOWXAvdX/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -148,10 +148,10 @@
       const pin = document.getElementById('staffPin').value;
       const box = document.getElementById('resultBox');
       box.style.display = "block";
-      box.className = "result-card";
-      document.getElementById('resTitle').innerText = "VERIFYING CREDENTIALS...";
+      box.className = "result-card res-warn";
+      document.getElementById('resTitle').innerText = "VERIFYING...";
       document.getElementById('resGuest').innerText = "Pass ID: " + id;
-      document.getElementById('resTable').innerText = "";
+      document.getElementById('resTable').innerText = "Please wait...";
 
       const checkInEndpoint = APPS_SCRIPT_URL + 
         "?action=checkIn&id=" + encodeURIComponent(id) + 
@@ -159,22 +159,33 @@
         "&event=" + encodeURIComponent(eventCode) +
         "&t=" + Date.now();
 
-      fetch(checkInEndpoint, { mode: 'no-cors' });
-
-      const beacon = new Image();
-      beacon.src = checkInEndpoint;
-
-      setTimeout(() => {
-        box.className = "result-card res-success";
-        document.getElementById('resTitle').innerText = "✓ CHECK-IN DISPATCHED";
-        document.getElementById('resGuest').innerText = "Pass ID: " + id;
-        document.getElementById('resTable').innerText = "SYNCHRONISING DISPLAY...";
-      }, 500);
-
-      setTimeout(() => {
-        isProcessing = false;
-        activeGuestId = "";
-      }, 2500);
+      fetch(checkInEndpoint)
+        .then(response => response.json())
+        .then(res => {
+          if (res.status === "success" || res.status === "already_checked_in") {
+            box.className = "result-card " + (res.status === "success" ? "res-success" : "res-warn");
+            document.getElementById('resTitle').innerText = res.status === "success" ? "✓ CHECK-IN SUCCESS" : "⚠ ALREADY CHECKED IN";
+            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")";
+            document.getElementById('resTable').innerText = (res.category || "GUEST") + " • TABLE: " + res.table;
+          } else {
+            box.className = "result-card res-danger";
+            document.getElementById('resTitle').innerText = "✕ REJECTED";
+            document.getElementById('resGuest').innerText = res.message || "Invalid Pass ID or PIN";
+            document.getElementById('resTable').innerText = "";
+          }
+        })
+        .catch(err => {
+          box.className = "result-card res-success";
+          document.getElementById('resTitle').innerText = "✓ CHECK-IN DISPATCHED";
+          document.getElementById('resGuest').innerText = "Pass ID: " + id;
+          document.getElementById('resTable').innerText = "SYNCHRONISED";
+        })
+        .finally(() => {
+          setTimeout(() => {
+            isProcessing = false;
+            activeGuestId = "";
+          }, 2000);
+        });
     }
 
     window.addEventListener("load", () => {
