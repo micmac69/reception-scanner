@@ -136,7 +136,7 @@
       margin-top: 6px;
     }
 
-    /* GRID MEJA SEPERTI FOTO 1 */
+    /* GRID MEJA INTERAKTIF */
     .section-lbl {
       font-size: 0.7rem;
       font-weight: 800;
@@ -167,7 +167,7 @@
     }
     .table-floor-card:active { transform: scale(0.97); }
     .table-floor-card.selected {
-      background: rgba(197, 160, 89, 0.18);
+      background: rgba(197, 160, 89, 0.25);
       border-color: var(--gold);
     }
     .tf-name { font-size: 0.8rem; font-weight: 900; color: #fff; margin-bottom: 2px; }
@@ -189,7 +189,7 @@
 
   <div class="scanner-card">
     <div class="top-bar">
-      <div class="top-title">RECEPTION DESK</div>
+      <div class="top-title" id="pageTitle">RECEPTION DESK</div>
       <div>
         <span style="font-size: 0.7rem; color: #94a3b8; margin-right: 4px;">PIN:</span>
         <input type="password" id="staffPin" class="pin-box" value="2026">
@@ -237,7 +237,7 @@
 
     <!-- TABLES & QUOTA (FLOOR PLAN) -->
     <div class="section-lbl">
-      <span>Tables & Quota (Floor Plan):</span>
+      <span>Tables & Quota (Floor Plan): <span id="activeOverrideText" style="color: var(--gold); font-size: 0.65rem;">(Default)</span></span>
       <span style="cursor: pointer; color: var(--gold);" onclick="refreshDashboardData()">⟳ Refresh</span>
     </div>
     <div id="tableFloorGrid" class="table-cards-grid">
@@ -251,6 +251,8 @@
     
     const urlParams = new URLSearchParams(window.location.search);
     const eventCode = urlParams.get('event') || "EA26-JKT";
+
+    document.getElementById('pageTitle').innerText = "DESK — " + eventCode;
 
     let activeGuestId = "";
     let isProcessing = false;
@@ -279,7 +281,7 @@
           let html = `
             <div class="table-floor-card ${selectedTableOverride === '' ? 'selected' : ''}" onclick="selectTableOverride('')" style="grid-column: span 2;">
               <div class="tf-name">-- Keep Existing / Default Table --</div>
-              <div class="tf-sub">Auto assign based on guest database</div>
+              <div class="tf-sub">Auto assign based on database</div>
             </div>
           `;
           
@@ -301,8 +303,14 @@
     }
 
     function selectTableOverride(tableName) {
-      selectedTableOverride = tableName;
-      document.getElementById('selectedOverrideTable').value = tableName;
+      if (selectedTableOverride === tableName) {
+        selectedTableOverride = ""; // Toggle off
+        document.getElementById('activeOverrideText').innerText = "(Default)";
+      } else {
+        selectedTableOverride = tableName;
+        document.getElementById('activeOverrideText').innerText = "(Override: " + tableName + ")";
+      }
+      document.getElementById('selectedOverrideTable').value = selectedTableOverride;
       refreshDashboardData();
     }
 
@@ -340,6 +348,7 @@
             document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + (res.hasPlusOne ? " [+1 Guest]" : "");
             document.getElementById('resTable').innerText = "TABLE: " + res.table;
             
+            // Refresh data statistik dan kuota meja secara instan setelah check-in
             refreshDashboardData();
           } else {
             box.className = "result-card res-danger";
