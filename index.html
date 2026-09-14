@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Reception Scanner Desk — Exquisite Awards</title>
+  <title>Reception Desk Scanner — Exquisite Awards</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,12 +12,18 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
+    :root {
+      --gold: #c5a059;
+      --bg-dark: #090d16;
+      --surface: #111827;
+      --border: #1f293d;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', -apple-system, sans-serif;
-      background: #090d16;
+      background: var(--bg-dark);
       color: #f8fafc;
-      padding: 16px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -26,73 +32,156 @@
     }
     .scanner-card {
       width: 100%;
-      max-width: 460px;
-      background: #111827;
-      border: 1px solid #1f293d;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 18px;
-      padding: 18px;
+      padding: 16px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .top-title {
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 800;
-      color: #c5a059;
+      color: var(--gold);
       letter-spacing: -0.01em;
+      text-transform: uppercase;
     }
     .pin-box {
-      width: 90px;
+      width: 75px;
       background: #1a2333;
       border: 1px solid #2e3d59;
       color: #fff;
-      padding: 6px 8px;
+      padding: 5px 6px;
       border-radius: 6px;
       text-align: center;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
     }
+
+    /* LIVE STATS COUNTER GRID */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .stat-box {
+      background: #182234;
+      border: 1px solid #24324a;
+      border-radius: 8px;
+      padding: 8px 4px;
+      text-align: center;
+    }
+    .stat-lbl {
+      font-size: 0.52rem;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat-val {
+      font-size: 0.9rem;
+      font-weight: 900;
+      color: #fff;
+      margin-top: 2px;
+    }
+    .stat-val.gold { color: var(--gold); }
+
     .manual-input {
       width: 100%;
-      padding: 12px 14px;
-      border-radius: 8px;
+      padding: 11px 14px;
+      border-radius: 10px;
       border: 1px solid #334155;
       background: #182234;
       color: #fff;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       outline: none;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-    .manual-input:focus { border-color: #c5a059; }
+    .manual-input:focus { border-color: var(--gold); }
 
+    /* TOMBOL & AREA SCANNER BESAR */
     #reader {
       width: 100%;
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
       background: #000;
       border: 1px solid #24324a;
-      min-height: 240px;
+      margin-bottom: 14px;
+    }
+    #reader video {
+      object-fit: cover !important;
     }
 
     .result-card {
       display: none;
       padding: 16px;
-      border-radius: 12px;
-      margin-top: 14px;
+      border-radius: 14px;
+      margin-top: 12px;
       text-align: center;
     }
-    .res-success { background: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; color: #10b981; }
-    .res-warn { background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; color: #f59e0b; }
-    .res-danger { background: rgba(239, 68, 68, 0.12); border: 1px solid #ef4444; color: #ef4444; }
+    .res-success { background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #10b981; }
+    .res-warn { background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #f59e0b; }
+    .res-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; }
 
     .guest-table-val {
-      font-size: 1.35rem;
+      font-size: 1.25rem;
       font-weight: 900;
       margin-top: 6px;
+    }
+
+    /* GRID MEJA SEPERTI FOTO 1 */
+    .section-lbl {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 16px 0 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .table-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .table-floor-card {
+      background: #182234;
+      border: 1px solid #2e3d59;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .table-floor-card:active { transform: scale(0.97); }
+    .table-floor-card.selected {
+      background: rgba(197, 160, 89, 0.18);
+      border-color: var(--gold);
+    }
+    .tf-name { font-size: 0.8rem; font-weight: 900; color: #fff; margin-bottom: 2px; }
+    .tf-sub { font-size: 0.62rem; color: #94a3b8; margin-bottom: 4px; }
+    .tf-occ { font-size: 0.72rem; font-weight: 700; color: #cbd5e1; }
+    .tf-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      background: #24324a;
+      color: #93c5fd;
     }
   </style>
 </head>
@@ -102,8 +191,28 @@
     <div class="top-bar">
       <div class="top-title">RECEPTION DESK</div>
       <div>
-        <span style="font-size: 0.75rem; color: #94a3b8; margin-right: 4px;">PIN:</span>
+        <span style="font-size: 0.7rem; color: #94a3b8; margin-right: 4px;">PIN:</span>
         <input type="password" id="staffPin" class="pin-box" value="2026">
+      </div>
+    </div>
+
+    <!-- LIVE STATS COUNTER BAR -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-lbl">Registered</div>
+        <div id="statReg" class="stat-val">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Checked In</div>
+        <div id="statIn" class="stat-val gold">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Remaining</div>
+        <div id="statRem" class="stat-val">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-lbl">Attendance</div>
+        <div id="statRate" class="stat-val">0%</div>
       </div>
     </div>
 
@@ -112,21 +221,32 @@
       type="text" 
       id="manualInput" 
       class="manual-input" 
-      placeholder="Pass Identifier / Scan Barcode Gun..." 
+      placeholder="Scan barcode or enter Guest ID..." 
       onkeydown="if(event.key==='Enter'){ triggerScan(this.value.trim()); this.value=''; }"
     >
 
+    <!-- QR SCANNER VIEWPORT -->
     <div id="reader"></div>
 
+    <!-- HASIL VALIDASI CHECK-IN -->
     <div id="resultBox" class="result-card">
       <h3 id="resTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
-      <p id="resGuest" style="color: #cbd5e1; font-size: 0.92rem; margin-top: 4px; font-weight: 600;"></p>
+      <p id="resGuest" style="color: #cbd5e1; font-size: 0.9rem; margin-top: 4px; font-weight: 600;"></p>
       <div id="resTable" class="guest-table-val"></div>
     </div>
+
+    <!-- TABLES & QUOTA (FLOOR PLAN) -->
+    <div class="section-lbl">
+      <span>Tables & Quota (Floor Plan):</span>
+      <span style="cursor: pointer; color: var(--gold);" onclick="refreshDashboardData()">⟳ Refresh</span>
+    </div>
+    <div id="tableFloorGrid" class="table-cards-grid">
+      <div style="grid-column: span 2; text-align: center; color: #64748b; font-size: 0.75rem; padding: 15px;">Loading tables...</div>
+    </div>
+    <input type="hidden" id="selectedOverrideTable" value="">
   </div>
 
   <script>
-    // APPS SCRIPT WEB APP /exec URL:
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfFvxF5nIADv6uwLXA9sDtJYZmdN10h2SpE5Pa2bz2_Im0c-i1Ckwxv_M6OOWXAvdX/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -134,6 +254,57 @@
 
     let activeGuestId = "";
     let isProcessing = false;
+    let selectedTableOverride = "";
+
+    function refreshDashboardData() {
+      // 1. Fetch Live Stats
+      fetch(APPS_SCRIPT_URL + "?action=getLiveStats&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+        .then(res => res.json())
+        .then(stats => {
+          if (stats) {
+            document.getElementById('statReg').innerText = stats.registered || 0;
+            document.getElementById('statIn').innerText = stats.checkedIn || 0;
+            document.getElementById('statRem').innerText = stats.remaining || 0;
+            document.getElementById('statRate').innerText = stats.rate || "0%";
+          }
+        }).catch(err => {});
+
+      // 2. Fetch Table Availability
+      fetch(APPS_SCRIPT_URL + "?action=getTableAvailability&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+        .then(res => res.json())
+        .then(tables => {
+          const grid = document.getElementById('tableFloorGrid');
+          if (!grid || !Array.isArray(tables)) return;
+          
+          let html = `
+            <div class="table-floor-card ${selectedTableOverride === '' ? 'selected' : ''}" onclick="selectTableOverride('')" style="grid-column: span 2;">
+              <div class="tf-name">-- Keep Existing / Default Table --</div>
+              <div class="tf-sub">Auto assign based on guest database</div>
+            </div>
+          `;
+          
+          tables.forEach(t => {
+            const isSel = selectedTableOverride === t.name;
+            html += `
+              <div class="table-floor-card ${isSel ? 'selected' : ''}" onclick="selectTableOverride('${t.name}')">
+                <div class="tf-name">${t.name}</div>
+                <div class="tf-sub">${t.zone || 'Main Zone'}</div>
+                <div class="tf-occ">${t.occupied}/${t.capacity} Seats</div>
+                <div class="tf-badge">${t.remaining} LEFT</div>
+              </div>
+            `;
+          });
+          grid.innerHTML = html;
+        }).catch(err => {
+          document.getElementById('tableFloorGrid').innerHTML = '<div style="grid-column: span 2; text-align: center; color: #ef4444; font-size: 0.75rem;">Failed to load tables</div>';
+        });
+    }
+
+    function selectTableOverride(tableName) {
+      selectedTableOverride = tableName;
+      document.getElementById('selectedOverrideTable').value = tableName;
+      refreshDashboardData();
+    }
 
     function onScanSuccess(decodedText) {
       if (isProcessing || activeGuestId === decodedText) return;
@@ -157,6 +328,7 @@
         "?action=checkIn&id=" + encodeURIComponent(id) + 
         "&pin=" + encodeURIComponent(pin) + 
         "&event=" + encodeURIComponent(eventCode) +
+        "&table=" + encodeURIComponent(selectedTableOverride) +
         "&t=" + Date.now();
 
       fetch(checkInEndpoint)
@@ -164,9 +336,11 @@
         .then(res => {
           if (res.status === "success" || res.status === "already_checked_in") {
             box.className = "result-card " + (res.status === "success" ? "res-success" : "res-warn");
-            document.getElementById('resTitle').innerText = res.status === "success" ? "✓ CHECK-IN SUCCESS" : "⚠ ALREADY CHECKED IN";
-            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")";
-            document.getElementById('resTable').innerText = (res.category || "GUEST") + " • TABLE: " + res.table;
+            document.getElementById('resTitle').innerText = res.status === "success" ? "✓ VALIDATED & CHECKED IN" : "⚠ ALREADY CHECKED IN";
+            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + (res.hasPlusOne ? " [+1 Guest]" : "");
+            document.getElementById('resTable').innerText = "TABLE: " + res.table;
+            
+            refreshDashboardData();
           } else {
             box.className = "result-card res-danger";
             document.getElementById('resTitle').innerText = "✕ REJECTED";
@@ -175,10 +349,10 @@
           }
         })
         .catch(err => {
-          box.className = "result-card res-success";
-          document.getElementById('resTitle').innerText = "✓ CHECK-IN DISPATCHED";
-          document.getElementById('resGuest').innerText = "Pass ID: " + id;
-          document.getElementById('resTable').innerText = "SYNCHRONISED";
+          box.className = "result-card res-danger";
+          document.getElementById('resTitle').innerText = "✕ CONNECTION ERROR";
+          document.getElementById('resGuest').innerText = "Unable to reach server.";
+          document.getElementById('resTable').innerText = "";
         })
         .finally(() => {
           setTimeout(() => {
@@ -189,9 +363,12 @@
     }
 
     window.addEventListener("load", () => {
+      refreshDashboardData();
+      setInterval(refreshDashboardData, 12000);
+
       const html5QrcodeScanner = new Html5QrcodeScanner(
         "reader", 
-        { fps: 15, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 }, 
+        { fps: 15, qrbox: { width: 230, height: 230 }, aspectRatio: 1.0 }, 
         false
       );
       html5QrcodeScanner.render(onScanSuccess);
