@@ -24,75 +24,99 @@
       font-family: 'Inter', -apple-system, sans-serif;
       background: var(--bg-dark);
       color: #f8fafc;
-      padding: 12px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
+
+    /* RESPONSIVE CONTAINER (LEBAR MAKSIMAL DIPERBESAR UNTUK DESKTOP) */
     .scanner-card {
       width: 100%;
-      max-width: 480px;
+      max-width: 920px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 20px;
+      padding: 20px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
     }
     .top-title {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       font-weight: 800;
       color: var(--gold);
       letter-spacing: -0.01em;
       text-transform: uppercase;
     }
     .pin-box {
-      width: 75px;
+      width: 80px;
       background: #1a2333;
       border: 1px solid #2e3d59;
       color: #fff;
-      padding: 5px 6px;
+      padding: 6px 8px;
       border-radius: 6px;
       text-align: center;
       font-weight: 700;
-      font-size: 0.82rem;
+      font-size: 0.85rem;
     }
 
     /* LIVE STATS COUNTER GRID */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 16px;
     }
     .stat-box {
       background: #182234;
       border: 1px solid #24324a;
-      border-radius: 8px;
-      padding: 8px 4px;
+      border-radius: 10px;
+      padding: 10px 6px;
       text-align: center;
     }
     .stat-lbl {
-      font-size: 0.52rem;
+      font-size: 0.58rem;
       font-weight: 800;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
     .stat-val {
-      font-size: 0.9rem;
+      font-size: 1.1rem;
       font-weight: 900;
       color: #fff;
       margin-top: 2px;
     }
     .stat-val.gold { color: var(--gold); }
+
+    /* RESPONSIVE GRID LAYOUT (1 KOLOM DI HP, 2 KOLOM DI DESKTOP) */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 768px) {
+      .workspace-grid {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .panel-box {
+      background: #141c2e;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
 
     .manual-input {
       width: 100%;
@@ -144,7 +168,7 @@
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      margin: 16px 0 8px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -153,9 +177,12 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
-      max-height: 240px;
+      max-height: 320px;
       overflow-y: auto;
       padding-right: 2px;
+    }
+    @media (min-width: 768px) {
+      .table-cards-grid { max-height: 380px; }
     }
     .table-floor-card {
       background: #182234;
@@ -217,34 +244,44 @@
       </div>
     </div>
 
-    <!-- Manual Identifier / Barcode Scanner Gun Input -->
-    <input 
-      type="text" 
-      id="manualInput" 
-      class="manual-input" 
-      placeholder="Scan barcode or enter Guest ID..." 
-      onkeydown="if(event.key==='Enter'){ triggerScan(this.value.trim()); this.value=''; }"
-    >
+    <!-- WORKSPACE 2 KOLOM DI DESKTOP, 1 KOLOM DI HP -->
+    <div class="workspace-grid">
+      
+      <!-- KOLOM KIRI: SCANNER & INPUT -->
+      <div class="panel-box">
+        <div class="section-lbl" style="margin-top:0;">Guest Identification</div>
+        <input 
+          type="text" 
+          id="manualInput" 
+          class="manual-input" 
+          placeholder="Scan barcode or enter Guest ID..." 
+          onkeydown="if(event.key==='Enter'){ triggerScan(this.value.trim()); this.value=''; }"
+        >
 
-    <!-- LIVE CAMERA VIEWPORT -->
-    <div id="reader"></div>
+        <!-- LIVE CAMERA VIEWPORT -->
+        <div id="reader"></div>
 
-    <!-- HASIL VALIDASI CHECK-IN -->
-    <div id="resultBox" class="result-card">
-      <h3 id="resTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
-      <p id="resGuest" style="color: #cbd5e1; font-size: 0.9rem; margin-top: 4px; font-weight: 600;"></p>
-      <div id="resTable" class="guest-table-val"></div>
-    </div>
+        <!-- HASIL VALIDASI CHECK-IN -->
+        <div id="resultBox" class="result-card">
+          <h3 id="resTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
+          <p id="resGuest" style="color: #cbd5e1; font-size: 0.9rem; margin-top: 4px; font-weight: 600;"></p>
+          <div id="resTable" class="guest-table-val"></div>
+        </div>
+      </div>
 
-    <!-- TABLES & QUOTA (FLOOR PLAN) -->
-    <div class="section-lbl">
-      <span>Tables & Quota: <span id="activeOverrideText" style="color: var(--gold); font-size: 0.65rem;">(Default)</span></span>
-      <span style="cursor: pointer; color: var(--gold);" onclick="refreshDashboardData()">⟳ Refresh</span>
+      <!-- KOLOM KANAN: TABEL & QUOTA -->
+      <div class="panel-box">
+        <div class="section-lbl" style="margin-top:0;">
+          <span>Tables & Quota: <span id="activeOverrideText" style="color: var(--gold); font-size: 0.65rem;">(Default)</span></span>
+          <span style="cursor: pointer; color: var(--gold);" onclick="refreshDashboardData()">⟳ Refresh</span>
+        </div>
+        <div id="tableFloorGrid" class="table-cards-grid">
+          <div style="grid-column: span 2; text-align: center; color: #64748b; font-size: 0.75rem; padding: 20px;">Loading tables...</div>
+        </div>
+        <input type="hidden" id="selectedOverrideTable" value="">
+      </div>
+
     </div>
-    <div id="tableFloorGrid" class="table-cards-grid">
-      <div style="grid-column: span 2; text-align: center; color: #64748b; font-size: 0.75rem; padding: 15px;">Loading tables...</div>
-    </div>
-    <input type="hidden" id="selectedOverrideTable" value="">
   </div>
 
   <script>
