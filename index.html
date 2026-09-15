@@ -296,6 +296,36 @@
     let isProcessing = false;
     let selectedTableOverride = "";
 
+    // FUNGSI AUDIO BEEP SYNTHESIZER (TANPA FILE EKSTERNAL)
+    function playBeepSound(type) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'success') {
+          // Nada tinggi jernih untuk sukses (880 Hz / A5)
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.18);
+        } else {
+          // Nada rendah ganda untuk peringatan / error (300 Hz)
+          osc.frequency.setValueAtTime(300, ctx.currentTime);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.12);
+        }
+      } catch (e) {}
+    }
+
     function refreshDashboardData() {
       // 1. Fetch Live Stats
       fetch(APPS_SCRIPT_URL + "?action=getLiveStats&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
@@ -381,6 +411,9 @@
         .then(response => response.json())
         .then(res => {
           if (res.status === "success" || res.status === "already_checked_in") {
+            // Bunyi Beep Sukses
+            playBeepSound('success');
+
             box.className = "result-card " + (res.status === "success" ? "res-success" : "res-warn");
             document.getElementById('resTitle').innerText = res.status === "success" ? "✓ VALIDATED & CHECKED IN" : "⚠ ALREADY CHECKED IN";
             document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + (res.hasPlusOne ? " [+1 Guest]" : "");
@@ -388,6 +421,9 @@
             
             refreshDashboardData();
           } else {
+            // Bunyi Beep Error / Ditolak
+            playBeepSound('error');
+
             box.className = "result-card res-danger";
             document.getElementById('resTitle').innerText = "✕ REJECTED";
             document.getElementById('resGuest').innerText = res.message || "Invalid Pass ID or PIN";
@@ -395,6 +431,8 @@
           }
         })
         .catch(err => {
+          playBeepSound('error');
+
           box.className = "result-card res-danger";
           document.getElementById('resTitle').innerText = "✕ CONNECTION ERROR";
           document.getElementById('resGuest').innerText = "Unable to reach server.";
@@ -410,7 +448,6 @@
 
     window.addEventListener("load", () => {
       refreshDashboardData();
-      // Polling background otomatis dihapus agar server Google tidak antre dan scan menjadi instan
 
       // Inisialisasi Live Camera Scanner menggunakan html5-qrcode
       const html5QrcodeScanner = new Html5QrcodeScanner(
