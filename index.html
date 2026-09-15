@@ -410,7 +410,7 @@
 
     window.addEventListener("load", () => {
       refreshDashboardData();
-      setInterval(refreshDashboardData, 12000);
+      // Polling background otomatis dihapus agar server Google tidak antre dan scan menjadi instan
 
       // Inisialisasi Live Camera Scanner menggunakan html5-qrcode
       const html5QrcodeScanner = new Html5QrcodeScanner(
