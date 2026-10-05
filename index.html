@@ -520,7 +520,7 @@
           if (!grid || !Array.isArray(tables)) return;
           
           let html = `
-            <div class="table-floor-card ${selectedTableOverride === '' ? 'selected' : ''}" onclick="selectTableOverride('')" style="grid-column: span 2;">
+            <div class="table-floor-card ${selectedTableOverride === '' ? 'selected' : ''}" onclick="handleTableCardClick('')" style="grid-column: span 2;">
               <div class="tf-name">-- Keep Existing / Default Table --</div>
               <div class="tf-sub">Auto assign based on database</div>
             </div>
@@ -529,7 +529,7 @@
           tables.forEach(t => {
             const isSel = selectedTableOverride === t.name;
             html += `
-              <div class="table-card table-floor-card ${isSel ? 'selected' : ''}" onclick="selectTableOverride('${t.name}')">
+              <div class="table-card table-floor-card ${isSel ? 'selected' : ''}" onclick="handleTableCardClick('${t.name}')">
                 <div class="tf-name">${t.name}</div>
                 <div class="tf-sub">${t.zone || 'Main Zone'}</div>
                 <div class="tf-occ">${t.occupied}/${t.capacity} Seats</div>
@@ -543,6 +543,17 @@
         });
     }
 
+    // DUAL-MODE: KLIK MEJA KANAN BISA UNTUK OVERRIDE (SEBELUM SCAN) ATAU SHIFT (SETELAH SCAN)
+    function handleTableCardClick(tableName) {
+      if (activeGuestId) {
+        // Jika sudah ada tamu aktif di layar, langsung pindahkan (shift) tamu tersebut ke meja ini!
+        shiftActiveGuestTable(tableName);
+      } else {
+        // Jika belum ada tamu yang di-scan, gunakan sebagai Table Override untuk scan berikutnya
+        selectTableOverride(tableName);
+      }
+    }
+
     function selectTableOverride(tableName) {
       if (selectedTableOverride === tableName) {
         selectedTableOverride = "";
@@ -553,6 +564,33 @@
       }
       document.getElementById('selectedOverrideTable').value = selectedTableOverride;
       refreshDashboardData();
+    }
+
+    function shiftActiveGuestTable(newTable) {
+      if (!activeGuestId) return;
+      const pin = document.getElementById('staffPin').value;
+      const box = document.getElementById('resultBox');
+      
+      const checkInEndpoint = APPS_SCRIPT_URL + 
+        "?action=checkIn&id=" + encodeURIComponent(activeGuestId) + 
+        "&pin=" + encodeURIComponent(pin) + 
+        "&event=" + encodeURIComponent(eventCode) +
+        "&table=" + encodeURIComponent(newTable) +
+        "&t=" + Date.now();
+
+      fetch(checkInEndpoint)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === "success" || res.status === "already_checked_in") {
+            playBeepSound('success');
+            activeTableAssigned = res.table || newTable;
+            document.getElementById('resTable').innerText = "TABLE: " + activeTableAssigned + " (UPDATED)";
+            refreshDashboardData();
+          } else {
+            alert(res.message || "Failed to update table allocation.");
+          }
+        })
+        .catch(err => alert("Error updating table: " + err));
     }
 
     function openTableModal() {
@@ -580,7 +618,7 @@
             html += `<div class="occupant-item">
               <div>
                 <div style="font-weight: 700; color: #fff;">${occ.name}</div>
-                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 1px;">${occ.company}</div>
+                <div style="font-size: 0.72rem; color: #9ca3af; margin-top: 1px;">${occ.company}</div>
               </div>
               <span style="font-size: 0.68rem; font-weight: 700; color: ${statusColor}; text-transform: uppercase;">${occ.status}</span>
             </div>`;
@@ -653,7 +691,6 @@
         .finally(() => {
           setTimeout(() => {
             isProcessing = false;
-            activeGuestId = "";
           }, 2000);
         });
     }
