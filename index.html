@@ -97,6 +97,7 @@
       margin-top: 2px;
     }
     .stat-val.gold { color: var(--gold); }
+    .stat-val.green { color: #34d399; }
 
     /* WORKSPACE GRID */
     .workspace-grid {
@@ -199,9 +200,21 @@
     .res-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; }
 
     .guest-table-val {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 900;
       margin-top: 6px;
+    }
+
+    .dietary-badge {
+      display: inline-block;
+      margin-top: 8px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #f87171;
+      color: #fca5a5;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
     }
 
     /* TABLE OCCUPANTS BUTTON & MODAL */
@@ -214,7 +227,7 @@
       font-size: 0.78rem;
       font-weight: 700;
       cursor: pointer;
-      margin-top: 12px;
+      margin-top: 10px;
       display: inline-block;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -260,7 +273,7 @@
       text-align: left;
     }
 
-    /* GRID MEJA INTERAKTIF */
+    /* GRID MEJA INTERAKTIF (3 WARNA DINAMIS) */
     .section-lbl {
       font-size: 0.7rem;
       font-weight: 800;
@@ -307,8 +320,6 @@
       border-radius: 6px;
       font-size: 0.65rem;
       font-weight: 800;
-      background: #24324a;
-      color: #93c5fd;
     }
   </style>
 </head>
@@ -331,7 +342,7 @@
       </div>
       <div class="stat-box">
         <div class="stat-lbl">Checked In</div>
-        <div id="statIn" class="stat-val gold">0</div>
+        <div id="statIn" class="stat-val green">0</div>
       </div>
       <div class="stat-box">
         <div class="stat-lbl">Remaining</div>
@@ -374,16 +385,12 @@
         <!-- LIVE CAMERA VIEWPORT -->
         <div id="reader"></div>
 
-        <!-- HASIL VALIDASI CHECK-IN -->
+        <!-- HASIL VALIDASI CHECK-IN / PREVIEW -->
         <div id="resultBox" class="result-card">
-          <h3 id="resTitle" style="font-size: 1.15rem; font-weight: 800;"></h3>
-          <p id="resGuest" style="color: #cbd5e1; font-size: 0.9rem; margin-top: 4px; font-weight: 600;"></p>
+          <h3 id="resTitle" style="font-size: 1.05rem; font-weight: 800;"></h3>
+          <p id="resGuest" style="color: #cbd5e1; font-size: 0.88rem; margin-top: 4px; font-weight: 600;"></p>
           <div id="resTable" class="guest-table-val"></div>
-          
-          <!-- Tombol View Table Occupants -->
-          <div>
-            <button type="button" class="table-check-btn" onclick="openTableModal()">🔍 View Table Occupants</button>
-          </div>
+          <div id="resDietary" class="dietary-badge" style="display:none;"></div>
         </div>
       </div>
 
@@ -467,9 +474,97 @@
       }, 300);
     }
 
+    // KETIKA NAMA DIKLIK DARI SEARCH -> TAMPILKAN PREVIEW (TIDAK LANGSUNG CHECK-IN)
     function selectSearchedGuest(passId) {
       document.getElementById('searchDropdown').style.display = 'none';
       document.getElementById('guestNameSearch').value = '';
+
+      fetch(APPS_SCRIPT_URL + "?action=getGuestInfo&id=" + encodeURIComponent(passId) + "&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+        .then(res => res.json())
+        .then(guest => {
+          if (guest && guest.id) {
+            displayGuestPreview(guest);
+          } else {
+            alert("Guest details not found.");
+          }
+        })
+        .catch(err => alert("Error loading guest: " + err));
+    }
+
+    // TAMPILAN PREVIEW SEBELUM KONFIRMASI CHECK-IN + VALIDASI PLUS-ONE
+    function displayGuestPreview(guest) {
+      activeGuestId = guest.id;
+      activeTableAssigned = guest.table || "UPON ARRIVAL";
+
+      const box = document.getElementById('resultBox');
+      const dietBox = document.getElementById('resDietary');
+      box.style.display = "block";
+      dietBox.style.display = "none";
+      box.className = "result-card res-warn";
+      
+      let tierTag = guest.classCategory && guest.classCategory !== "GUEST" ? " [" + guest.classCategory + "]" : "";
+      document.getElementById('resTitle').innerText = "📋 GUEST PREVIEW (PENDING CHECK-IN)";
+      document.getElementById('resGuest').innerText = guest.name + " (" + guest.company + ")" + tierTag;
+      
+      let plusOneHtml = "";
+      if (guest.hasPlusOne) {
+        plusOneHtml = `<div style="color: #34d399; font-size: 0.8rem; font-weight: 700; margin-top: 6px;">✓ +1 ALLOCATED: ${guest.plusOneDetails || 'Guest Partner'}</div>`;
+      } else {
+        plusOneHtml = `
+          <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; padding: 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; margin-top: 8px;">
+            ⚠️ WARNING: Single Pass Only (No +1 Allocated)
+            <br>
+            <button type="button" onclick="overrideAddPax('${guest.id}')" style="background: #ef4444; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 0.72rem; margin-top: 6px;">
+              + OVERRIDE: ADD +1 PAX
+            </button>
+          </div>
+        `;
+      }
+
+      let tableHtml = `
+        <div style="margin: 8px 0; font-size: 0.85rem; color: #cbd5e1;">
+          Table Assigned: <b style="color: var(--gold);">${activeTableAssigned}</b>
+        </div>
+        ${plusOneHtml}
+        <div style="display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap;">
+          <button type="button" onclick="confirmCheckIn('${guest.id}')" style="background: #10b981; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 0.82rem;">
+            ✓ CONFIRM CHECK-IN
+          </button>
+          <button type="button" onclick="openTableModal()" class="table-check-btn" style="margin-top: 0;">
+            🔍 View Table
+          </button>
+        </div>
+      `;
+      document.getElementById('resTable').innerHTML = tableHtml;
+
+      if (guest.dietaryNotes && guest.dietaryNotes.trim() && guest.dietaryNotes !== "-") {
+        dietBox.style.display = "inline-block";
+        dietBox.innerText = "DIETARY NOTE: " + guest.dietaryNotes;
+      }
+    }
+
+    // FUNGSI OVERRIDE TAMBAH PAX
+    function overrideAddPax(passId) {
+      const pin = document.getElementById('staffPin').value;
+      if (!pin) { alert("Please enter Staff PIN to override."); return; }
+      if (!confirm("Add an extra +1 pax for this guest?")) return;
+
+      fetch(APPS_SCRIPT_URL + "?action=overridePlusOne&id=" + encodeURIComponent(passId) + "&pin=" + encodeURIComponent(pin) + "&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+        .then(res => res.json())
+        .then(res => {
+          if (res && res.status === "success") {
+            alert(res.message);
+            selectSearchedGuest(passId); // Refresh preview
+            refreshDashboardData();
+          } else {
+            alert(res.message || "Failed to override +1.");
+          }
+        })
+        .catch(err => alert("Error: " + err));
+    }
+
+    // KONFIRMASI CHECK-IN MANUAL
+    function confirmCheckIn(passId) {
       triggerScan(passId);
     }
 
@@ -528,12 +623,28 @@
           
           tables.forEach(t => {
             const isSel = selectedTableOverride === t.name;
+            
+            // LOGIKA 3 WARNA DINAMIS
+            let badgeStyle = '';
+            let badgeText = '';
+
+            if (t.occupied === 0) {
+              badgeStyle = 'background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);';
+              badgeText = t.remaining + ' LEFT (EMPTY)';
+            } else if (t.isFull || t.remaining <= 0) {
+              badgeStyle = 'background: rgba(239, 68, 68, 0.25); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4);';
+              badgeText = '0 LEFT (FULL)';
+            } else {
+              badgeStyle = 'background: rgba(245, 158, 11, 0.25); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4);';
+              badgeText = t.remaining + ' LEFT';
+            }
+
             html += `
               <div class="table-card table-floor-card ${isSel ? 'selected' : ''}" onclick="handleTableCardClick('${t.name}')">
                 <div class="tf-name">${t.name}</div>
                 <div class="tf-sub">${t.zone || 'Main Zone'}</div>
                 <div class="tf-occ">${t.occupied}/${t.capacity} Seats</div>
-                <div class="tf-badge">${t.remaining} LEFT</div>
+                <div class="tf-badge" style="${badgeStyle}">${badgeText}</div>
               </div>
             `;
           });
@@ -543,13 +654,10 @@
         });
     }
 
-    // DUAL-MODE: KLIK MEJA KANAN BISA UNTUK OVERRIDE (SEBELUM SCAN) ATAU SHIFT (SETELAH SCAN)
     function handleTableCardClick(tableName) {
       if (activeGuestId) {
-        // Jika sudah ada tamu aktif di layar, langsung pindahkan (shift) tamu tersebut ke meja ini!
         shiftActiveGuestTable(tableName);
       } else {
-        // Jika belum ada tamu yang di-scan, gunakan sebagai Table Override untuk scan berikutnya
         selectTableOverride(tableName);
       }
     }
@@ -569,7 +677,6 @@
     function shiftActiveGuestTable(newTable) {
       if (!activeGuestId) return;
       const pin = document.getElementById('staffPin').value;
-      const box = document.getElementById('resultBox');
       
       const checkInEndpoint = APPS_SCRIPT_URL + 
         "?action=checkIn&id=" + encodeURIComponent(activeGuestId) + 
@@ -584,7 +691,10 @@
           if (res.status === "success" || res.status === "already_checked_in") {
             playBeepSound('success');
             activeTableAssigned = res.table || newTable;
-            document.getElementById('resTable').innerText = "TABLE: " + activeTableAssigned + " (UPDATED)";
+            document.getElementById('resTable').innerHTML = `
+              <div class="guest-table-val">TABLE: ${activeTableAssigned} (UPDATED)</div>
+              <div><button type="button" class="table-check-btn" onclick="openTableModal()">🔍 View Table Occupants</button></div>
+            `;
             refreshDashboardData();
           } else {
             alert(res.message || "Failed to update table allocation.");
@@ -646,7 +756,9 @@
 
       const pin = document.getElementById('staffPin').value;
       const box = document.getElementById('resultBox');
+      const dietBox = document.getElementById('resDietary');
       box.style.display = "block";
+      dietBox.style.display = "none";
       box.className = "result-card res-warn";
       document.getElementById('resTitle').innerText = "VERIFYING...";
       document.getElementById('resGuest').innerText = "Pass ID: " + id;
@@ -666,10 +778,22 @@
             playBeepSound('success');
             box.className = "result-card " + (res.status === "success" ? "res-success" : "res-warn");
             document.getElementById('resTitle').innerText = res.status === "success" ? "✓ VALIDATED & CHECKED IN" : "⚠ ALREADY CHECKED IN";
-            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + (res.hasPlusOne ? " [+1 Guest]" : "");
+            
+            let plusTag = res.hasPlusOne ? " [+1 Guest]" : "";
+            let tierTag = res.category && res.category !== "GUEST" ? " [" + res.category + "]" : "";
+            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + tierTag + plusTag;
             
             activeTableAssigned = res.table || "";
-            document.getElementById('resTable').innerText = "TABLE: " + activeTableAssigned;
+            document.getElementById('resTable').innerHTML = `
+              <div class="guest-table-val">TABLE: ${activeTableAssigned}</div>
+              <div><button type="button" class="table-check-btn" onclick="openTableModal()">🔍 View Table Occupants</button></div>
+            `;
+
+            if (res.dietary && res.dietary.trim()) {
+              dietBox.style.display = "inline-block";
+              dietBox.innerText = "DIETARY ALERT: " + res.dietary;
+            }
+
             refreshDashboardData();
           } else {
             playBeepSound('error');
