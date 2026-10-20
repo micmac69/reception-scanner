@@ -32,7 +32,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* RESPONSIVE CONTAINER */
     .scanner-card {
       width: 100%;
       max-width: 920px;
@@ -69,7 +68,6 @@
       font-size: 0.85rem;
     }
 
-    /* LIVE STATS COUNTER GRID */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -99,7 +97,6 @@
     .stat-val.gold { color: var(--gold); }
     .stat-val.green { color: #34d399; }
 
-    /* WORKSPACE GRID */
     .workspace-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -132,7 +129,6 @@
     }
     .manual-input:focus { border-color: var(--gold); }
 
-    /* SEARCH DROPDOWN STYLING */
     .search-container {
       position: relative;
       margin-bottom: 12px;
@@ -159,14 +155,8 @@
       text-align: left;
       transition: background 0.15s;
     }
-    .search-item:hover {
-      background: #1a2333;
-    }
-    .search-item-name {
-      font-weight: 700;
-      color: #fff;
-      font-size: 0.85rem;
-    }
+    .search-item:hover { background: #1a2333; }
+    .search-item-name { font-weight: 700; color: #fff; font-size: 0.85rem; }
     .search-item-sub {
       font-size: 0.7rem;
       color: #94a3b8;
@@ -175,7 +165,6 @@
       margin-top: 2px;
     }
 
-    /* LIVE CAMERA VIEWPORT */
     #reader {
       width: 100%;
       border-radius: 14px;
@@ -184,23 +173,32 @@
       border: 1px solid #24324a;
       margin-bottom: 14px;
     }
-    #reader video {
-      object-fit: cover !important;
-    }
+    #reader video { object-fit: cover !important; }
 
     .result-card {
       display: none;
       padding: 16px;
       border-radius: 14px;
       margin-top: 12px;
-      text-align: center;
+      text-align: left;
+      position: relative;
     }
     .res-success { background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #10b981; }
     .res-warn { background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #f59e0b; }
     .res-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; }
 
+    .close-card-btn {
+      position: absolute;
+      top: 10px; right: 12px;
+      background: none; border: none;
+      color: inherit; font-size: 1.2rem;
+      cursor: pointer; font-weight: 900;
+      opacity: 0.8;
+    }
+    .close-card-btn:hover { opacity: 1; }
+
     .guest-table-val {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 900;
       margin-top: 6px;
     }
@@ -217,7 +215,6 @@
       border-radius: 6px;
     }
 
-    /* TABLE OCCUPANTS BUTTON & MODAL */
     .table-check-btn {
       background: rgba(212, 175, 55, 0.15);
       border: 1px solid #d4af37;
@@ -227,12 +224,19 @@
       font-size: 0.78rem;
       font-weight: 700;
       cursor: pointer;
-      margin-top: 10px;
       display: inline-block;
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
     .table-check-btn:hover { background: rgba(212, 175, 55, 0.3); }
+
+    .group-input-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 8px;
+    }
 
     .modal-overlay {
       display: none;
@@ -273,7 +277,6 @@
       text-align: left;
     }
 
-    /* GRID MEJA INTERAKTIF (3 WARNA DINAMIS) */
     .section-lbl {
       font-size: 0.7rem;
       font-weight: 800;
@@ -387,6 +390,7 @@
 
         <!-- HASIL VALIDASI CHECK-IN / PREVIEW -->
         <div id="resultBox" class="result-card">
+          <button type="button" class="close-card-btn" onclick="closeResultCard()" title="Close">&times;</button>
           <h3 id="resTitle" style="font-size: 1.05rem; font-weight: 800;"></h3>
           <p id="resGuest" style="color: #cbd5e1; font-size: 0.88rem; margin-top: 4px; font-weight: 600;"></p>
           <div id="resTable" class="guest-table-val"></div>
@@ -474,7 +478,6 @@
       }, 300);
     }
 
-    // KETIKA NAMA DIKLIK DARI SEARCH -> TAMPILKAN PREVIEW (TIDAK LANGSUNG CHECK-IN)
     function selectSearchedGuest(passId) {
       document.getElementById('searchDropdown').style.display = 'none';
       document.getElementById('guestNameSearch').value = '';
@@ -491,7 +494,15 @@
         .catch(err => alert("Error loading guest: " + err));
     }
 
-    // TAMPILAN PREVIEW SEBELUM KONFIRMASI CHECK-IN + VALIDASI PLUS-ONE
+    // MENUTUP KARTU HASIL / PREVIEW TANPA REFRESH
+    function closeResultCard() {
+      const box = document.getElementById('resultBox');
+      box.style.display = "none";
+      activeGuestId = "";
+      activeTableAssigned = "";
+    }
+
+    // TAMPILAN PREVIEW + KONTROL ROMBONGAN BESAR (4, 9 ORANG, DLL) & DECLINED
     function displayGuestPreview(guest) {
       activeGuestId = guest.id;
       activeTableAssigned = guest.table || "UPON ARRIVAL";
@@ -506,17 +517,24 @@
       document.getElementById('resTitle').innerText = "📋 GUEST PREVIEW (PENDING CHECK-IN)";
       document.getElementById('resGuest').innerText = guest.name + " (" + guest.company + ")" + tierTag;
       
-      let plusOneHtml = "";
+      let groupHtml = "";
       if (guest.hasPlusOne) {
-        plusOneHtml = `<div style="color: #34d399; font-size: 0.8rem; font-weight: 700; margin-top: 6px;">✓ +1 ALLOCATED: ${guest.plusOneDetails || 'Guest Partner'}</div>`;
+        groupHtml = `<div style="color: #34d399; font-size: 0.8rem; font-weight: 700; margin-top: 6px;">✓ GROUP / ALLOCATION: ${guest.plusOneDetails || 'Partner / Group'}</div>`;
       } else {
-        plusOneHtml = `
-          <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; padding: 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; margin-top: 8px;">
-            ⚠️ WARNING: Single Pass Only (No +1 Allocated)
-            <br>
-            <button type="button" onclick="overrideAddPax('${guest.id}')" style="background: #ef4444; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 0.72rem; margin-top: 6px;">
-              + OVERRIDE: ADD +1 PAX
-            </button>
+        groupHtml = `
+          <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; padding: 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; margin-top: 8px;">
+            ⚠️ Single / Normal Pass (Datang Rombongan / Banyak Orang?)
+            <div class="group-input-box">
+              <label style="display: block; color: #cbd5e1; font-size: 0.68rem; margin-bottom: 3px;">Total People (Total Pax incl. Main Guest):</label>
+              <input type="number" id="groupPaxCount" value="2" min="1" max="30" style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #334155; background: #182234; color: #fff; font-size: 0.85rem; margin-bottom: 6px;">
+              
+              <label style="display: block; color: #cbd5e1; font-size: 0.68rem; margin-bottom: 3px;">Names of Additional Guests:</label>
+              <input type="text" id="groupNamesList" placeholder="e.g. John Doe, Jane Smith..." style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #334155; background: #182234; color: #fff; font-size: 0.8rem; margin-bottom: 8px;">
+              
+              <button type="button" onclick="overrideGroup('${guest.id}')" style="background: #ef4444; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 0.72rem; width: 100%;">
+                💾 SAVE GROUP / UPDATE PAX
+              </button>
+            </div>
           </div>
         `;
       }
@@ -525,13 +543,19 @@
         <div style="margin: 8px 0; font-size: 0.85rem; color: #cbd5e1;">
           Table Assigned: <b style="color: var(--gold);">${activeTableAssigned}</b>
         </div>
-        ${plusOneHtml}
-        <div style="display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap;">
-          <button type="button" onclick="confirmCheckIn('${guest.id}')" style="background: #10b981; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 0.82rem;">
+        ${groupHtml}
+        <div style="display: flex; gap: 6px; justify-content: center; margin-top: 14px; flex-wrap: wrap;">
+          <button type="button" onclick="confirmCheckIn('${guest.id}')" style="background: #10b981; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 0.78rem;">
             ✓ CONFIRM CHECK-IN
           </button>
-          <button type="button" onclick="openTableModal()" class="table-check-btn" style="margin-top: 0;">
+          <button type="button" onclick="markDeclined('${guest.id}')" style="background: #dc2626; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 0.78rem;" title="Mark as Declined">
+            🚫 DECLINED
+          </button>
+          <button type="button" onclick="openTableModal()" class="table-check-btn" style="margin-top: 0; padding: 8px 12px; font-size: 0.78rem;">
             🔍 View Table
+          </button>
+          <button type="button" onclick="closeResultCard()" style="background: #334155; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.78rem;">
+            ✕ CANCEL
           </button>
         </div>
       `;
@@ -543,13 +567,17 @@
       }
     }
 
-    // FUNGSI OVERRIDE TAMBAH PAX
-    function overrideAddPax(passId) {
+    // FUNGSI SIMPAN ROMBONGAN (MISAL 4 ATAU 9 ORANG)
+    function overrideGroup(passId) {
       const pin = document.getElementById('staffPin').value;
+      const pax = document.getElementById('groupPaxCount').value;
+      const names = document.getElementById('groupNamesList').value;
+      
       if (!pin) { alert("Please enter Staff PIN to override."); return; }
-      if (!confirm("Add an extra +1 pax for this guest?")) return;
+      if (!pax || pax < 1) { alert("Please enter a valid number of people."); return; }
+      if (!confirm("Register group of " + pax + " people for this guest?")) return;
 
-      fetch(APPS_SCRIPT_URL + "?action=overridePlusOne&id=" + encodeURIComponent(passId) + "&pin=" + encodeURIComponent(pin) + "&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+      fetch(APPS_SCRIPT_URL + "?action=overrideGroupPax&id=" + encodeURIComponent(passId) + "&pax=" + encodeURIComponent(pax) + "&names=" + encodeURIComponent(names) + "&pin=" + encodeURIComponent(pin) + "&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
         .then(res => res.json())
         .then(res => {
           if (res && res.status === "success") {
@@ -557,18 +585,36 @@
             selectSearchedGuest(passId); // Refresh preview
             refreshDashboardData();
           } else {
-            alert(res.message || "Failed to override +1.");
+            alert(res.message || "Failed to update group quota.");
           }
         })
         .catch(err => alert("Error: " + err));
     }
 
-    // KONFIRMASI CHECK-IN MANUAL
+    // FUNGSI TANDAI DECLINED
+    function markDeclined(passId) {
+      const pin = document.getElementById('staffPin').value;
+      if (!pin) { alert("Please enter Staff PIN."); return; }
+      if (!confirm("Mark this guest as Declined?")) return;
+
+      fetch(APPS_SCRIPT_URL + "?action=markDeclined&id=" + encodeURIComponent(passId) + "&pin=" + encodeURIComponent(pin) + "&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+        .then(res => res.json())
+        .then(res => {
+          if (res && res.status === "success") {
+            alert("Guest marked as Declined.");
+            closeResultCard();
+            refreshDashboardData();
+          } else {
+            alert(res.message || "Failed.");
+          }
+        })
+        .catch(err => alert("Error: " + err));
+    }
+
     function confirmCheckIn(passId) {
       triggerScan(passId);
     }
 
-    // FUNGSI AUDIO BEEP SYNTHESIZER
     function playBeepSound(type) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -623,8 +669,6 @@
           
           tables.forEach(t => {
             const isSel = selectedTableOverride === t.name;
-            
-            // LOGIKA 3 WARNA DINAMIS
             let badgeStyle = '';
             let badgeText = '';
 
@@ -705,7 +749,7 @@
 
     function openTableModal() {
       if (!activeTableAssigned || activeTableAssigned === "UPON ARRIVAL" || activeTableAssigned === "FREE SEATING" || activeTableAssigned === "-") {
-        alert("This guest has not been allocated a fixed table yet (Status: " + (activeTableAssigned || "None") + ").");
+        alert("This guest has not been allocated a fixed table yet.");
         return;
       }
 
@@ -736,7 +780,7 @@
           container.innerHTML = html;
         })
         .catch(err => {
-          document.getElementById('occupantsListContainer').innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px; font-size: 0.85rem;">Failed to load table occupants.</div>';
+          container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px; font-size: 0.85rem;">Failed to load table occupants.</div>';
         });
     }
 
@@ -779,14 +823,13 @@
             box.className = "result-card " + (res.status === "success" ? "res-success" : "res-warn");
             document.getElementById('resTitle').innerText = res.status === "success" ? "✓ VALIDATED & CHECKED IN" : "⚠ ALREADY CHECKED IN";
             
-            let plusTag = res.hasPlusOne ? " [+1 Guest]" : "";
             let tierTag = res.category && res.category !== "GUEST" ? " [" + res.category + "]" : "";
-            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + tierTag + plusTag;
+            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + tierTag;
             
             activeTableAssigned = res.table || "";
             document.getElementById('resTable').innerHTML = `
               <div class="guest-table-val">TABLE: ${activeTableAssigned}</div>
-              <div><button type="button" class="table-check-btn" onclick="openTableModal()">🔍 View Table Occupants</button></div>
+              <div style="margin-top: 8px;"><button type="button" class="table-check-btn" onclick="openTableModal()">🔍 View Table Occupants</button></div>
             `;
 
             if (res.dietary && res.dietary.trim()) {
