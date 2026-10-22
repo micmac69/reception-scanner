@@ -131,7 +131,7 @@
 
     .search-container {
       position: relative;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .search-dropdown {
       display: none;
@@ -229,14 +229,6 @@
       letter-spacing: 0.04em;
     }
     .table-check-btn:hover { background: rgba(212, 175, 55, 0.3); }
-
-    .group-input-box {
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 8px;
-    }
 
     .modal-overlay {
       display: none;
@@ -371,19 +363,24 @@
           onkeydown="if(event.key==='Enter'){ triggerScan(this.value.trim()); this.value=''; }"
         >
 
-        <!-- KOTAK PENCARIAN NAMA / PERUSAHAAN -->
+        <!-- KOTAK PENCARIAN NAMA, PERUSAHAAN, ATAU TELEPON (FITUR 1) -->
         <div class="search-container">
           <input 
             type="text" 
             id="guestNameSearch" 
             class="manual-input" 
             style="margin-bottom: 0;"
-            placeholder="🔍 Search guest by name or company..." 
+            placeholder="🔍 Search name, company, or phone..." 
             oninput="handleGuestSearch(this.value)" 
             autocomplete="off"
           >
           <div id="searchDropdown" class="search-dropdown"></div>
         </div>
+
+        <!-- TOMBOL QUICK WALK-IN GUEST (FITUR 2) -->
+        <button type="button" onclick="openWalkInModal()" style="width: 100%; background: rgba(197, 160, 89, 0.15); border: 1px solid var(--gold); color: var(--gold); padding: 9px; border-radius: 10px; font-weight: 800; cursor: pointer; margin-bottom: 12px; font-size: 0.78rem;">
+          ➕ ADD WALK-IN GUEST (TAMU DADAKAN)
+        </button>
 
         <!-- LIVE CAMERA VIEWPORT -->
         <div id="reader"></div>
@@ -395,6 +392,14 @@
           <p id="resGuest" style="color: #cbd5e1; font-size: 0.88rem; margin-top: 4px; font-weight: 600;"></p>
           <div id="resTable" class="guest-table-val"></div>
           <div id="resDietary" class="dietary-badge" style="display:none;"></div>
+        </div>
+
+        <!-- RECENT CHECK-INS ACTIVITY LOG (FITUR 4) -->
+        <div style="margin-top: 14px; background: #0f1c2e; border: 1px solid var(--border); border-radius: 10px; padding: 10px;">
+          <div style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">⚡ Recent Check-Ins Log</div>
+          <div id="recentLogContainer" style="font-size: 0.75rem; color: #cbd5e1; max-height: 80px; overflow-y: auto;">
+            Loading history...
+          </div>
         </div>
       </div>
 
@@ -426,6 +431,46 @@
     </div>
   </div>
 
+  <!-- MODAL POPUP: QUICK WALK-IN REGISTRATION (FITUR 2) -->
+  <div id="walkInModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Quick Walk-In Registration</div>
+        <button type="button" class="close-modal" onclick="closeWalkInModal()">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div>
+          <label style="font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 2px;">Guest Full Name *</label>
+          <input type="text" id="walkInName" class="manual-input" placeholder="Full Name..." style="margin-bottom:0;">
+        </div>
+        <div>
+          <label style="font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 2px;">Company / Organization</label>
+          <input type="text" id="walkInCompany" class="manual-input" placeholder="Company..." style="margin-bottom:0;">
+        </div>
+        <div>
+          <label style="font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 2px;">Phone Number</label>
+          <input type="text" id="walkInPhone" class="manual-input" placeholder="Phone..." style="margin-bottom:0;">
+        </div>
+        <div>
+          <label style="font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 2px;">Category</label>
+          <select id="walkInCategory" class="manual-input" style="margin-bottom:0; background:#182234; color:#fff;">
+            <option value="GUEST">GUEST</option>
+            <option value="VIP">VIP</option>
+            <option value="VVIP">VVIP</option>
+            <option value="MEDIA">MEDIA</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 2px;">Table Assignment</label>
+          <input type="text" id="walkInTable" class="manual-input" placeholder="e.g. TABLE 1 or UPON ARRIVAL" style="margin-bottom:0;">
+        </div>
+        <button type="button" onclick="submitWalkInGuest()" style="background: var(--gold); color: #0b0f17; border: none; padding: 12px; border-radius: 10px; font-weight: 900; cursor: pointer; margin-top: 6px;">
+          REGISTER & CHECK-IN WALK-IN
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfFvxF5nIADv6uwLXA9sDtJYZmdN10h2SpE5Pa2bz2_Im0c-i1Ckwxv_M6OOWXAvdX/exec";
     
@@ -439,7 +484,7 @@
     let isProcessing = false;
     let selectedTableOverride = "";
 
-    // FUNGSI PENCARIAN NAMA TAMU (LIVE SEARCH)
+    // FUNGSI PENCARIAN NAMA, PERUSAHAAN, ATAU TELEPON (FITUR 1)
     let searchTimeout;
     function handleGuestSearch(query) {
       clearTimeout(searchTimeout);
@@ -494,15 +539,16 @@
         .catch(err => alert("Error loading guest: " + err));
     }
 
-    // MENUTUP KARTU HASIL / PREVIEW TANPA REFRESH
     function closeResultCard() {
       const box = document.getElementById('resultBox');
       box.style.display = "none";
+      box.style.border = "";
+      box.style.boxShadow = "";
       activeGuestId = "";
       activeTableAssigned = "";
     }
 
-    // TAMPILAN PREVIEW + KONTROL ROMBONGAN BESAR (4, 9 ORANG, DLL) & DECLINED
+    // TAMPILAN PREVIEW + EFEK VISUAL VVIP (FITUR 3)
     function displayGuestPreview(guest) {
       activeGuestId = guest.id;
       activeTableAssigned = guest.table || "UPON ARRIVAL";
@@ -512,9 +558,17 @@
       box.style.display = "block";
       dietBox.style.display = "none";
       box.className = "result-card res-warn";
+
+      if (guest.classCategory === "VVIP") {
+        box.style.border = "2px solid #d4af37";
+        box.style.boxShadow = "0 0 15px rgba(212, 175, 55, 0.4)";
+      } else {
+        box.style.border = "";
+        box.style.boxShadow = "";
+      }
       
       let tierTag = guest.classCategory && guest.classCategory !== "GUEST" ? " [" + guest.classCategory + "]" : "";
-      document.getElementById('resTitle').innerText = "📋 GUEST PREVIEW (PENDING CHECK-IN)";
+      document.getElementById('resTitle').innerText = guest.classCategory === "VVIP" ? "👑 VVIP GUEST PREVIEW" : "📋 GUEST PREVIEW (PENDING CHECK-IN)";
       document.getElementById('resGuest').innerText = guest.name + " (" + guest.company + ")" + tierTag;
       
       let groupHtml = "";
@@ -567,7 +621,42 @@
       }
     }
 
-    // FUNGSI SIMPAN ROMBONGAN (MISAL 4 ATAU 9 ORANG)
+    // FUNGSI MODAL WALK-IN (FITUR 2)
+    function openWalkInModal() {
+      document.getElementById('walkInModal').style.display = 'flex';
+    }
+    function closeWalkInModal() {
+      document.getElementById('walkInModal').style.display = 'none';
+    }
+    function submitWalkInGuest() {
+      const name = document.getElementById('walkInName').value.trim();
+      const company = document.getElementById('walkInCompany').value.trim();
+      const phone = document.getElementById('walkInPhone').value.trim();
+      const category = document.getElementById('walkInCategory').value;
+      const table = document.getElementById('walkInTable').value.trim();
+      const pin = document.getElementById('staffPin').value;
+
+      if (!name) { alert("Please enter guest name."); return; }
+      if (!pin) { alert("Please enter Staff PIN."); return; }
+
+      fetch(APPS_SCRIPT_URL + "?action=registerWalkIn&name=" + encodeURIComponent(name) + "&company=" + encodeURIComponent(company) + "&phone=" + encodeURIComponent(phone) + "&category=" + encodeURIComponent(category) + "&table=" + encodeURIComponent(table) + "&pin=" + encodeURIComponent(pin) + "&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+        .then(res => res.json())
+        .then(res => {
+          if (res && res.status === "success") {
+            alert(res.message);
+            closeWalkInModal();
+            document.getElementById('walkInName').value = "";
+            document.getElementById('walkInCompany').value = "";
+            document.getElementById('walkInPhone').value = "";
+            document.getElementById('walkInTable').value = "";
+            refreshDashboardData();
+          } else {
+            alert(res.message || "Failed to register walk-in.");
+          }
+        })
+        .catch(err => alert("Error: " + err));
+    }
+
     function overrideGroup(passId) {
       const pin = document.getElementById('staffPin').value;
       const pax = document.getElementById('groupPaxCount').value;
@@ -582,7 +671,7 @@
         .then(res => {
           if (res && res.status === "success") {
             alert(res.message);
-            selectSearchedGuest(passId); // Refresh preview
+            selectSearchedGuest(passId);
             refreshDashboardData();
           } else {
             alert(res.message || "Failed to update group quota.");
@@ -591,7 +680,6 @@
         .catch(err => alert("Error: " + err));
     }
 
-    // FUNGSI TANDAI DECLINED
     function markDeclined(passId) {
       const pin = document.getElementById('staffPin').value;
       if (!pin) { alert("Please enter Staff PIN."); return; }
@@ -611,10 +699,7 @@
         .catch(err => alert("Error: " + err));
     }
 
-    function confirmCheckIn(passId) {
-      triggerScan(passId);
-    }
-
+    // FUNGSI AUDIO BEEP SYNTHESIZER
     function playBeepSound(type) {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -654,6 +739,27 @@
           }
         }).catch(err => {});
 
+      // RECENT CHECK-INS LOG (FITUR 4)
+      fetch(APPS_SCRIPT_URL + "?action=getRecentCheckIns&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
+        .then(res => res.json())
+        .then(logs => {
+          const container = document.getElementById('recentLogContainer');
+          if (!container) return;
+          if (!logs || logs.length === 0) {
+            container.innerHTML = '<div style="color: #64748b; font-style: italic;">No check-ins yet.</div>';
+            return;
+          }
+          let html = '';
+          logs.forEach(l => {
+            html += `<div style="display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <span style="font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${l.name}</span>
+              <span style="color: var(--gold);">${l.table}</span>
+              <span style="color: #64748b;">${l.time}</span>
+            </div>`;
+          });
+          container.innerHTML = html;
+        }).catch(err => {});
+
       fetch(APPS_SCRIPT_URL + "?action=getTableAvailability&event=" + encodeURIComponent(eventCode) + "&t=" + Date.now())
         .then(res => res.json())
         .then(tables => {
@@ -684,10 +790,10 @@
             }
 
             html += `
-              <div class="table-card table-floor-card ${isSel ? 'selected' : ''}" onclick="handleTableCardClick('${t.name}')">
+              <div class="table-card table-floor-card ${isSel ? 'selected' : ''}" onclick="handleTableCardClick('${t.name}', ${t.remaining})">
                 <div class="tf-name">${t.name}</div>
                 <div class="tf-sub">${t.zone || 'Main Zone'}</div>
-                <div class="tf-occ">${t.occupied}/${t.capacity} Seats</div>
+                <div class="tf-occ" style="font-weight: 700; color: #fff;">👥 ${t.occupied} / ${t.capacity} Seats</div>
                 <div class="tf-badge" style="${badgeStyle}">${badgeText}</div>
               </div>
             `;
@@ -698,8 +804,12 @@
         });
     }
 
-    function handleTableCardClick(tableName) {
+    function handleTableCardClick(tableName, remainingSeats) {
       if (activeGuestId) {
+        if (remainingSeats !== undefined && remainingSeats <= 0) {
+          alert("⚠️ PENOLAKAN: Meja " + tableName + " sudah PENUH (0 kursi tersisa). Silakan pilih meja lain.");
+          return;
+        }
         shiftActiveGuestTable(tableName);
       } else {
         selectTableOverride(tableName);
@@ -821,7 +931,16 @@
           if (res.status === "success" || res.status === "already_checked_in") {
             playBeepSound('success');
             box.className = "result-card " + (res.status === "success" ? "res-success" : "res-warn");
-            document.getElementById('resTitle').innerText = res.status === "success" ? "✓ VALIDATED & CHECKED IN" : "⚠ ALREADY CHECKED IN";
+            
+            if (res.category === "VVIP") {
+              box.style.border = "2px solid #d4af37";
+              box.style.boxShadow = "0 0 15px rgba(212, 175, 55, 0.4)";
+              document.getElementById('resTitle').innerText = res.status === "success" ? "👑 VVIP VALIDATED & CHECKED IN" : "👑 VVIP ALREADY CHECKED IN";
+            } else {
+              box.style.border = "";
+              box.style.boxShadow = "";
+              document.getElementById('resTitle').innerText = res.status === "success" ? "✓ VALIDATED & CHECKED IN" : "⚠ ALREADY CHECKED IN";
+            }
             
             let tierTag = res.category && res.category !== "GUEST" ? " [" + res.category + "]" : "";
             document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + tierTag;
@@ -841,6 +960,8 @@
           } else {
             playBeepSound('error');
             box.className = "result-card res-danger";
+            box.style.border = "";
+            box.style.boxShadow = "";
             document.getElementById('resTitle').innerText = "✕ REJECTED";
             document.getElementById('resGuest').innerText = res.message || "Invalid Pass ID or PIN";
             document.getElementById('resTable').innerText = "";
@@ -850,6 +971,8 @@
         .catch(err => {
           playBeepSound('error');
           box.className = "result-card res-danger";
+          box.style.border = "";
+          box.style.boxShadow = "";
           document.getElementById('resTitle').innerText = "✕ CONNECTION ERROR";
           document.getElementById('resGuest').innerText = "Unable to reach server.";
           document.getElementById('resTable').innerText = "";
