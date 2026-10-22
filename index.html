@@ -903,6 +903,84 @@
       triggerScan(decodedText);
     }
 
+    // KONFIRMASI CHECK-IN DENGAN FEEDBACK VISUAL HIJAU (FIXED)
+    function confirmCheckIn(passId) {
+      if (!passId) return;
+      const pin = document.getElementById('staffPin').value;
+      const box = document.getElementById('resultBox');
+      const dietBox = document.getElementById('resDietary');
+      box.style.display = "block";
+      dietBox.style.display = "none";
+      box.className = "result-card res-warn";
+      document.getElementById('resTitle').innerText = "VERIFYING...";
+      document.getElementById('resGuest').innerText = "Pass ID: " + passId;
+      document.getElementById('resTable').innerText = "Please wait...";
+
+      const checkInEndpoint = APPS_SCRIPT_URL + 
+        "?action=checkIn&id=" + encodeURIComponent(passId) + 
+        "&pin=" + encodeURIComponent(pin) + 
+        "&event=" + encodeURIComponent(eventCode) +
+        "&table=" + encodeURIComponent(selectedTableOverride) +
+        "&t=" + Date.now();
+
+      fetch(checkInEndpoint)
+        .then(response => response.json())
+        .then(res => {
+          if (res.status === "success" || res.status === "already_checked_in") {
+            playBeepSound('success');
+            box.className = "result-card " + (res.status === "success" ? "res-success" : "res-warn");
+            
+            if (res.category === "VVIP") {
+              box.style.border = "2px solid #d4af37";
+              box.style.boxShadow = "0 0 15px rgba(212, 175, 55, 0.4)";
+              document.getElementById('resTitle').innerText = res.status === "success" ? "👑 VVIP VALIDATED & CHECKED IN" : "👑 VVIP ALREADY CHECKED IN";
+            } else {
+              box.style.border = "";
+              box.style.boxShadow = "";
+              document.getElementById('resTitle').innerText = res.status === "success" ? "✓ VALIDATED & CHECKED IN" : "⚠ ALREADY CHECKED IN";
+            }
+            
+            let tierTag = res.category && res.category !== "GUEST" ? " [" + res.category + "]" : "";
+            document.getElementById('resGuest').innerText = res.name + " (" + (res.company || "-") + ")" + tierTag;
+            
+            activeTableAssigned = res.table || "";
+            document.getElementById('resTable').innerHTML = `
+              <div class="guest-table-val">TABLE: ${activeTableAssigned}</div>
+              <div style="margin-top: 8px; text-align: center;">
+                <button type="button" class="table-check-btn" onclick="openTableModal()">🔍 View Table Occupants</button>
+                <button type="button" onclick="closeResultCard()" style="background: #334155; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.78rem; margin-left: 6px;">✕ CLOSE</button>
+              </div>
+            `;
+
+            if (res.dietary && res.dietary.trim()) {
+              dietBox.style.display = "inline-block";
+              dietBox.innerText = "DIETARY ALERT: " + res.dietary;
+            }
+
+            refreshDashboardData();
+          } else {
+            playBeepSound('error');
+            box.className = "result-card res-danger";
+            box.style.border = "";
+            box.style.boxShadow = "";
+            document.getElementById('resTitle').innerText = "✕ REJECTED";
+            document.getElementById('resGuest').innerText = res.message || "Invalid Pass ID or PIN";
+            document.getElementById('resTable').innerText = "";
+            activeTableAssigned = "";
+          }
+        })
+        .catch(err => {
+          playBeepSound('error');
+          box.className = "result-card res-danger";
+          box.style.border = "";
+          box.style.boxShadow = "";
+          document.getElementById('resTitle').innerText = "✕ CONNECTION ERROR";
+          document.getElementById('resGuest').innerText = "Unable to reach server.";
+          document.getElementById('resTable').innerText = "";
+          activeTableAssigned = "";
+        });
+    }
+
     function triggerScan(id) {
       if (!id || isProcessing) return;
       isProcessing = true;
